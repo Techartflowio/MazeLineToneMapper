@@ -171,11 +171,10 @@ namespace NRP.ToneMapping
                         data.Material.SetFloat("_Exposure", m_toneMapComponent.Exposure.value);
                         data.Material.SetFloat("_IgnoreCharacterPixels",
                             m_toneMapComponent.IgnoreCharacterPixels.value ? 1.0f : 0);
-						// NRPToneMappingFeature.cs에서
-						int shaderPass = (int)m_toneMapComponent.ToneMapType.value;
-						// GT 스타일 톤매핑은 0번 패스를 사용
-						if (m_toneMapComponent.ToneMapType.value == ToneMapCurveType.GranTurismo)
-							shaderPass = 0;
+                        data.Material.SetFloat("_TonemapAGXGamma", m_toneMapComponent.AgxGamma.value );
+                        
+                        // 수정된 부분: 각 톤매핑 타입에 맞는 Pass 인덱스 사용
+                        int shaderPass = (int)m_toneMapComponent.ToneMapType.value;
                         DrawTriangle(rgContext.cmd, m_toneMapMaterial, shaderPass);
                     });
                 }

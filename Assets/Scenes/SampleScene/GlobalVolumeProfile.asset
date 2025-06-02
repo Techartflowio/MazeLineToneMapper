@@ -17,7 +17,7 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 1
   threshold:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0.9
   intensity:
     m_OverrideState: 1
@@ -76,10 +76,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   active: 1
   ToneMapType:
-    m_OverrideState: 0
-    m_Value: 0
+    m_OverrideState: 1
+    m_Value: 4
   Exposure:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 1
   IgnoreCharacterPixels:
     m_OverrideState: 0
@@ -87,3 +87,6 @@ MonoBehaviour:
   CharacterPixelsToneMapStrength:
     m_OverrideState: 0
     m_Value: 0
+  AgxGamma:
+    m_OverrideState: 1
+    m_Value: 5

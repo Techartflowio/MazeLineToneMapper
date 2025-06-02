@@ -11,7 +11,8 @@ namespace NRP
         None = 0,
         Filmic = 1,
         KhronosNeutral = 2,
-        GranTurismo = 3
+        GranTurismo = 3,
+        AGX = 4
     }
 
     [Serializable, VolumeComponentMenu("NRP/UBER PBR Neutral Mapping")]
@@ -23,6 +24,7 @@ namespace NRP
         public ClampedFloatParameter Exposure = new ClampedFloatParameter(1.0f, 0.2f, 7f);
         public BoolParameter IgnoreCharacterPixels = new BoolParameter(false);
         public ClampedFloatParameter CharacterPixelsToneMapStrength = new ClampedFloatParameter(0.0f, 0, 1.0f);
+        public ClampedFloatParameter AgxGamma = new ClampedFloatParameter(1.0f, 1.0f, 7f);
         public NRPToneMap()
         {
             displayName = "MazeLine Tone Mapping";
