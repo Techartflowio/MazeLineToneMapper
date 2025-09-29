@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-9135034131092795836
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9d047502c878c54bb8ce173b1af23e3, type: 3}
+  m_Name: MLToneMap
+  m_EditorClassIdentifier: Assembly-CSharp::ML.MLToneMap
+  active: 1
+  ToneMapType:
+    m_OverrideState: 1
+    m_Value: 4
+  Exposure:
+    m_OverrideState: 0
+    m_Value: 0.2
+  IgnoreCharacterPixels:
+    m_OverrideState: 0
+    m_Value: 0
+  CharacterPixelsToneMapStrength:
+    m_OverrideState: 0
+    m_Value: 0
+  AgxGamma:
+    m_OverrideState: 1
+    m_Value: 0
+  AgxGammaPivot:
+    m_OverrideState: 1
+    m_Value: 0.8
 --- !u!114 &-32820517437979890
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -61,7 +92,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   components:
   - {fileID: -32820517437979890}
-  - {fileID: 3354619455536427197}
+  - {fileID: -9135034131092795836}
 --- !u!114 &3354619455536427197
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -77,7 +108,7 @@ MonoBehaviour:
   active: 1
   ToneMapType:
     m_OverrideState: 1
-    m_Value: 4
+    m_Value: 0
   Exposure:
     m_OverrideState: 1
     m_Value: 1
@@ -90,3 +121,6 @@ MonoBehaviour:
   AgxGamma:
     m_OverrideState: 1
     m_Value: 5
+  AgxGammaPivot:
+    m_OverrideState: 0
+    m_Value: 0.5

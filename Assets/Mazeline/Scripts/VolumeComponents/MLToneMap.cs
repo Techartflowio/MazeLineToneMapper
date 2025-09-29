@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using UnityEngine.Rendering.Universal;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
-namespace NRP
+namespace ML
 {
     public enum ToneMapCurveType : int
     {
@@ -15,8 +15,8 @@ namespace NRP
         AGX = 4
     }
 
-    [Serializable, VolumeComponentMenu("NRP/UBER PBR Neutral Mapping")]
-    public class NRPToneMap : VolumeComponent, IPostProcessComponent
+    [Serializable, VolumeComponentMenu("MazeLine/UBER Tone Mapping")]
+    public class MLToneMap : VolumeComponent, IPostProcessComponent
     {
         [SerializeField]public ToneMapCurveTypeParameter ToneMapType =
         new ToneMapCurveTypeParameter(ToneMapCurveType.None);
@@ -24,8 +24,10 @@ namespace NRP
         public ClampedFloatParameter Exposure = new ClampedFloatParameter(1.0f, 0.2f, 7f);
         public BoolParameter IgnoreCharacterPixels = new BoolParameter(false);
         public ClampedFloatParameter CharacterPixelsToneMapStrength = new ClampedFloatParameter(0.0f, 0, 1.0f);
-        public ClampedFloatParameter AgxGamma = new ClampedFloatParameter(1.0f, 1.0f, 7f);
-        public NRPToneMap()
+        public ClampedFloatParameter AgxGamma = new ClampedFloatParameter(0.0f, 0f, 1.0f);
+        public ClampedFloatParameter AgxGammaPivot = new ClampedFloatParameter(0.8f, 0.01f, 1.0f);
+        
+        public MLToneMap()
         {
             displayName = "MazeLine Tone Mapping";
         }
@@ -38,7 +40,6 @@ namespace NRP
         [Obsolete("Unused #from(2023.1)", false)]
         public bool IsTileCompatible()
         {
-
             return false;
         }
     }

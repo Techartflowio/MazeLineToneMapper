@@ -1,4 +1,4 @@
-﻿Shader "Hidden/NTRANCE/PostProcess/ToneMapping"
+Shader "Hidden/MAZELINE/PostProcess/ToneMapping"
 {
 	SubShader
     {
@@ -46,7 +46,7 @@
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
-            #include "NRPCommon.hlsl"
+            #include "MLCommon.hlsl"
             
             static const float e = 2.71828;
 
@@ -90,14 +90,13 @@
                 half4 col = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.texcoord);
             	float characterDepth = SampleCharacterSceneDepth(input.texcoord);
             	float sceneDepth = SampleSceneDepth(input.texcoord);
-            	float isSkipToneMapCharacter = step(0.1, _IgnoreCharacterPixels) * step(LinearEyeDepth(characterDepth, _ZBufferParams), ASP_DEPTH_EYE_BIAS + LinearEyeDepth(sceneDepth, _ZBufferParams));
+            	float isSkipToneMapCharacter = step(0.1, _IgnoreCharacterPixels) * step(LinearEyeDepth(characterDepth, _ZBufferParams), ML_DEPTH_EYE_BIAS + LinearEyeDepth(sceneDepth, _ZBufferParams));
             	
 				half4 toneMappedCol = half4(Uncharted2ToneMapping(col.rgb, _Exposure),col.a);
             	if(isSkipToneMapCharacter * SampleMateriaPass(input.texcoord).r > 0)
             	{
             		return lerp(col, toneMappedCol, pow(saturate(_ToneMapLowerBound*1.2), 0.5));
             	}
-            	
                 return toneMappedCol;
             }
             ENDHLSL
@@ -115,7 +114,7 @@
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
-            #include "NRPCommon.hlsl"
+            #include "MLCommon.hlsl"
             
             #pragma vertex Vert
             #pragma fragment frag
@@ -151,7 +150,7 @@
                 half4 col = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.texcoord);
             	float characterDepth = SampleCharacterSceneDepth(input.texcoord);
             	float sceneDepth = SampleSceneDepth(input.texcoord);
-            	float isSkipToneMapCharacter = step(0.1, _IgnoreCharacterPixels) * step(LinearEyeDepth(characterDepth, _ZBufferParams), ASP_DEPTH_EYE_BIAS + LinearEyeDepth(sceneDepth, _ZBufferParams));
+            	float isSkipToneMapCharacter = step(0.1, _IgnoreCharacterPixels) * step(LinearEyeDepth(characterDepth, _ZBufferParams), ML_DEPTH_EYE_BIAS + LinearEyeDepth(sceneDepth, _ZBufferParams));
             	
 				half4 toneMappedCol = half4(PBRNeutralToneMapping(col.rgb * _Exposure), col.a);
             	if(isSkipToneMapCharacter * SampleMateriaPass(input.texcoord).r > 0)
@@ -175,7 +174,7 @@
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "NRPCommon.hlsl"
+            #include "MLCommon.hlsl"
             
             static const float e = 2.71828;
 
@@ -252,8 +251,8 @@
         }
 
         // Pass 4: AGX ToneMapping
-        // AGX 톤매핑
-        // 소니의 AGX 톤매핑 커브를 구현
+        // AgX 뷰 트랜스폼 기반 톤매핑 (OCIO/Blender 채택)
+        // 기본 곡선 + 하이라이트에서의 색 안정화를 위한 간단한 가뭇 압축/탈채도 적용
         Pass
         {
             Name "AGX ToneMapping"
@@ -263,7 +262,7 @@
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
-            #include "NRPCommon.hlsl"
+            #include "MLCommon.hlsl"
             
             #pragma vertex Vert
             #pragma fragment frag
@@ -274,7 +273,8 @@
             float _Exposure;
             float _IgnoreCharacterPixels;
             float _ToneMapLowerBound;
-            float _TonemapAGXGamma;
+            float _TonemapAGXGamma; // LGG 스타일 아티스틱 감마(1.0=중립)
+            float _TonemapAGXGammaPivot; // 감마 피벗(기준) 값, 예: 0.5 또는 0.18
 
 			static const float3x3 agx_mat = float3x3(
 				0.842479062253094, 0.0784335999999992, 0.0792237451477643,
@@ -318,54 +318,83 @@
 				return val;
 			}
 
-			float3 agxEotf(float3 val) 
+            float3 agxEotf(float3 val) 
 			{
-			
 				// Inverse input transform (outset)
 				val = mul(agx_mat_inv, val);
-			
-				// sRGB IEC 61966-2-1 2.2 Exponent Reference EOTF Display
-				// NOTE: We're linearizing the output here. Comment/adjust when
-				// *not* using a sRGB render target
-				val = pow(val, _TonemapAGXGamma);
-
+				
+				// 출력은 선형 색공간으로 유지합니다. sRGB 백버퍼/텍스처에서 EOTF는 하드웨어 경로에 위임됩니다.
+				// 과거 감마 pow는 이중 인코딩을 유발할 수 있어 제거되었습니다.
+				// val = pow(val, _TonemapAGXGamma);
 				return val;
 			}
+
+			// 간단한 가뭇 압축/하이라이트 탈채도
+			float3 agxGamutCompress(float3 c)
+			{
+				float luma = dot(c, float3(0.2126, 0.7152, 0.0722));
+				float peak = max(max(c.r, c.g), c.b);
+				float hi = saturate(smoothstep(0.8, 1.0, peak));
+				float3 gray = luma.xxx;
+				float strength = 0.15 * hi;
+				c = lerp(c, gray, strength);
+				const float k = 0.2;
+				c = c / (1.0 + k * c);
+				return c;
+			}
+
+			// Prepare a scalar gamma exponent akin to URP ColorUtils.PrepareLiftGammaGain behavior.
+            // Interpret UI gamma as sRGB-domain scalar with neutral at 1.0 (range [0,1]).
+            // Map to linear via SRGBToLinear, compute delta from 1.0, scale by 0.8 (URP),
+            // then form exponent = 1 / (1 + 0.8 * delta). Neutral (delta=0) -> exponent = 1.
+            float agxPrepareLGGScalarExponent(float gammaUI)
+            {
+                float s = gammaUI;                        // sRGB domain (neutral=1.0)
+                float lin = SRGBToLinear(s.xxx).x;        // to linear
+                float delta = lin - 1.0;                  // deviation from neutral
+                float denom = max(1.0 + 0.8 * delta, 1e-3);
+                return rcp(denom);
+            }
+
+            // Artistic gamma (LGG-like) with pivot using the prepared scalar exponent.
+            float3 agxApplyArtisticGammaPivoted(float3 c, float gammaUI, float pivot)
+            {
+                pivot = clamp(pivot, 1e-4, 1.0);
+                float exp = agxPrepareLGGScalarExponent(gammaUI);
+                c = max(c, 1e-6);
+                return pow(c / pivot, exp) * pivot;
+            }
 
 			float3 AGXFitted(float3 value) 
 			{
 				value = agx(value);
 				value = agxEotf(value);
+				// Artistic gamma (LGG-like) with pivot using the prepared scalar exponent.
+                value = agxApplyArtisticGammaPivoted(value, _TonemapAGXGamma, _TonemapAGXGammaPivot);
+				value = agxGamutCompress(value);
 				return value;
 			}
 
-            half4 frag (Varyings input) : SV_Target
-            {
-                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                
-                half4 col = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.texcoord);
-                
-                float characterDepth = SampleCharacterSceneDepth(input.texcoord);
-                float sceneDepth = SampleSceneDepth(input.texcoord);
-                float isSkipToneMapCharacter = step(0.1, _IgnoreCharacterPixels) * 
-                    step(LinearEyeDepth(characterDepth, _ZBufferParams), 
-                         ASP_DEPTH_EYE_BIAS + LinearEyeDepth(sceneDepth, _ZBufferParams));
-                
-                // 노출 적용
-                float3 exposedColor = col.rgb * _Exposure;
-                
-                // AGX 톤매핑 적용
-                float3 toneMappedColor = AGXFitted( exposedColor);
-                
-                // 캐릭터 픽셀 처리
-                if(isSkipToneMapCharacter * SampleMateriaPass(input.texcoord).r > 0)
-                {
-                    float lerpFactor = pow(saturate(_ToneMapLowerBound * 1.2), 0.5);
-                    toneMappedColor = lerp(col.rgb, toneMappedColor, lerpFactor);
-                }
-                
-                return half4(toneMappedColor, col.a);
-            }
+			half4 frag (Varyings input) : SV_Target
+			{
+				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+				half4 col = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.texcoord);
+				float characterDepth = SampleCharacterSceneDepth(input.texcoord);
+				float sceneDepth = SampleSceneDepth(input.texcoord);
+				float isSkipToneMapCharacter = step(0.1, _IgnoreCharacterPixels) *
+					step(LinearEyeDepth(characterDepth, _ZBufferParams), ML_DEPTH_EYE_BIAS + LinearEyeDepth(sceneDepth, _ZBufferParams));
+				// AGX 경로는 내부적으로 노출을 적용하지 않습니다. 입력을 그대로 사용합니다.
+				float3 toneMappedColor = AGXFitted(col.rgb);
+				// 캐릭터 픽셀 처리
+				if(isSkipToneMapCharacter * SampleMateriaPass(input.texcoord).r > 0)
+				{
+					float lerpFactor = pow(saturate(_ToneMapLowerBound * 1.2), 0.5);
+					toneMappedColor = lerp(col.rgb, toneMappedColor, lerpFactor);
+				}
+				return half4(toneMappedColor, col.a);
+			}
+
+			
             ENDHLSL
         }
     }

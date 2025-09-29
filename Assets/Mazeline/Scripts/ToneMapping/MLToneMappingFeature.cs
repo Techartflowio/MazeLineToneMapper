@@ -1,23 +1,23 @@
-﻿using System;
-using NRP.Common;
+using System;
+using ML.Common;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering.RenderGraphModule;
 
-namespace NRP.ToneMapping
+namespace ML.ToneMapping
 {
-    [DisallowMultipleRendererFeature("NRP ToneMapping")]
-    public class NRPToneMappingFeature : ScriptableRendererFeature
+    [DisallowMultipleRendererFeature("Mazeline ToneMapping")]
+    public class MLToneMappingFeature : ScriptableRendererFeature
     {
         public RenderPassEvent injectionPoint = RenderPassEvent.AfterRenderingPostProcessing;
         private Material _material;
-        private NRPToneMappingPass _mNrpToneMapPass;
+        private MLToneMappingPass _mMlToneMapPass;
 
         /// <inheritdoc/>
         public override void Create()
         {
-            _mNrpToneMapPass = new NRPToneMappingPass(name);
+            _mMlToneMapPass = new MLToneMappingPass(name);
         }
 
         /// <inheritdoc/>
@@ -29,7 +29,7 @@ namespace NRP.ToneMapping
 
             if (_material == null)
             {
-                var defaultShader = Shader.Find("Hidden/NTRANCE/PostProcess/ToneMapping");
+                var defaultShader = Shader.Find("Hidden/MAZELINE/PostProcess/ToneMapping");
                 if (defaultShader != null)
                 {
                     _material = new Material(defaultShader);
@@ -38,26 +38,31 @@ namespace NRP.ToneMapping
                 return;
             }
 
-            _mNrpToneMapPass.renderPassEvent = (RenderPassEvent)injectionPoint;
-            _mNrpToneMapPass.ConfigureInput(ScriptableRenderPassInput.None);
-            _mNrpToneMapPass.SetupMembers(_material);
+            _mMlToneMapPass.renderPassEvent = (RenderPassEvent)injectionPoint;
+            _mMlToneMapPass.ConfigureInput(ScriptableRenderPassInput.None);
+            _mMlToneMapPass.SetupMembers(_material);
 
-            renderer.EnqueuePass(_mNrpToneMapPass);
+            renderer.EnqueuePass(_mMlToneMapPass);
         }
 
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
-            _mNrpToneMapPass.Dispose();
+            _mMlToneMapPass.Dispose();
         }
 
-        public class NRPToneMappingPass : ScriptableRenderPass
+        public class MLToneMappingPass : ScriptableRenderPass
         {
             private Material m_toneMapMaterial;
             private RTHandle m_copiedColor;
-            private NRPToneMap m_toneMapComponent;
+            private MLToneMap m_toneMapComponent;
+            // One-hot shader keywords for static paths (future: consolidate to single-pass if desired)
+            static readonly string KW_TM_FILMIC = "TM_FILMIC";
+            static readonly string KW_TM_NEUTRAL = "TM_NEUTRAL";
+            static readonly string KW_TM_GT = "TM_GT";
+            static readonly string KW_TM_AGX = "TM_AGX";
 
-            public NRPToneMappingPass(string passName)
+            public MLToneMappingPass(string passName)
             {
                 profilingSampler = new ProfilingSampler(passName);
             }
@@ -107,7 +112,7 @@ namespace NRP.ToneMapping
                 if (m_toneMapMaterial == null)
                     return;
 
-                m_toneMapComponent = VolumeManager.instance.stack.GetComponent<NRPToneMap>();
+                m_toneMapComponent = VolumeManager.instance.stack.GetComponent<MLToneMap>();
                 if (m_toneMapComponent == null || 
                     m_toneMapComponent.ToneMapType.value == ToneMapCurveType.None || 
                     !m_toneMapComponent.ToneMapType.overrideState)
@@ -162,6 +167,9 @@ namespace NRP.ToneMapping
                     //    builder.SetRenderAttachmentDepth(resourcesData.activeDepthTexture, AccessFlags.Write);
                     builder.SetRenderFunc((ToneMapPassData data, RasterGraphContext rgContext) =>
                     {
+                        // Color space assumption:
+                        // - Input is linear sRGB (scene-linear)
+                        // - Output stays linear; sRGB conversion handled by backbuffer/texture formats
                         data.Material.SetVector("_Lut_Params",
                             new Vector4(1f / passData.LutWidth, 1f / passData.LutHeight, passData.LutHeight - 1f, 0));
                         data.Material.SetVector("_BlitScaleBias", Vector2.one);
@@ -172,9 +180,40 @@ namespace NRP.ToneMapping
                         data.Material.SetFloat("_IgnoreCharacterPixels",
                             m_toneMapComponent.IgnoreCharacterPixels.value ? 1.0f : 0);
                         data.Material.SetFloat("_TonemapAGXGamma", m_toneMapComponent.AgxGamma.value );
+                        data.Material.SetFloat("_TonemapAGXGammaPivot", m_toneMapComponent.AgxGammaPivot.value );
                         
-                        // 수정된 부분: 각 톤매핑 타입에 맞는 Pass 인덱스 사용
-                        int shaderPass = (int)m_toneMapComponent.ToneMapType.value;
+                        // One-hot keyword selection (static compile paths)
+                        data.Material.DisableKeyword(KW_TM_FILMIC);
+                        data.Material.DisableKeyword(KW_TM_NEUTRAL);
+                        data.Material.DisableKeyword(KW_TM_GT);
+                        data.Material.DisableKeyword(KW_TM_AGX);
+
+                        int shaderPass = 0; // default to None
+                        switch (m_toneMapComponent.ToneMapType.value)
+                        {
+                            case ToneMapCurveType.Filmic:
+                                data.Material.EnableKeyword(KW_TM_FILMIC);
+                                shaderPass = (int)ToneMapCurveType.Filmic; // temporary: still using pass index
+                                break;
+                            case ToneMapCurveType.KhronosNeutral:
+                                data.Material.EnableKeyword(KW_TM_NEUTRAL);
+                                shaderPass = (int)ToneMapCurveType.KhronosNeutral;
+                                break;
+                            case ToneMapCurveType.GranTurismo:
+                                data.Material.EnableKeyword(KW_TM_GT);
+                                shaderPass = (int)ToneMapCurveType.GranTurismo;
+                                break;
+                            case ToneMapCurveType.AGX:
+                                data.Material.EnableKeyword(KW_TM_AGX);
+                                shaderPass = (int)ToneMapCurveType.AGX;
+                                break;
+                            case ToneMapCurveType.None:
+                            default:
+                                shaderPass = (int)ToneMapCurveType.None;
+                                break;
+                        }
+
+                        // TODO(T13-followup): collapse to a single pass gated by keywords only.
                         DrawTriangle(rgContext.cmd, m_toneMapMaterial, shaderPass);
                     });
                 }

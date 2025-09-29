@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace NRP.Common
+namespace ML.Common
 {
    public static class Util
     {

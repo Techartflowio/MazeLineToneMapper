@@ -1,17 +1,10 @@
-﻿#ifndef NRPSHADER_COMMON_INCLUDED
-#define NRPSHADER_COMMON_INCLUDED
+﻿#ifndef ML_SHADER_COMMON_INCLUDED
+#define ML_SHADER_COMMON_INCLUDED
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-/*
- * Copyright (C) Eric Hu - All Rights Reserved
- * Unauthorized copying of this file, via any medium is strictly prohibited
- * Proprietary and confidential
- * Written by Eric Hu (Shu Yuan, Hu) March, 2024
-*/
+#define ML_DEPTH_EYE_BIAS  0.005
 
-#define ASP_DEPTH_EYE_BIAS  0.005
-
-#define ASP_OFFSET_SHADOW_EYE_BIAS  0.001
+#define ML_OFFSET_SHADOW_EYE_BIAS  0.001
 
 void SetupSurround8UVs(float2 uvCenter, inout float2 uvs[8], float2 uvStep)
 {
@@ -94,20 +87,18 @@ half hash11(float p)
     return frac(p);
 }
 
-TEXTURE2D(_ASPMaterialTexture);
-SAMPLER(sampler_ASPMaterialTexture);
+TEXTURE2D(_MLMaterialTexture);
+SAMPLER(sampler_MLMaterialTexture);
 
-TEXTURE2D(_ASPMaterialDepthTexture);
-SamplerState asp_point_clamp_sampler;
+TEXTURE2D(_MLMaterialDepthTexture);
+SamplerState ml_point_clamp_sampler;
 
-TEXTURE2D(_ASPDepthOffsetShadowTexture);
+TEXTURE2D(_MLDepthOffsetShadowTexture);
 
-SamplerState asp_linear_clamp_sampler;
+SamplerState ml_linear_clamp_sampler;
 
 half3 DecodeMaterialIDToColor(half value)
 {
-    // Calculate a color based on the material ID,
-    // hash31()  provides a pseudo-random color based on the input
     half materialID = value;
     materialID *= 255.0;
     float factor = step(1, materialID);
@@ -123,7 +114,7 @@ half DecodeMaterialIDToFloat(half value)
 
 half4 SampleMateriaPass(float2 uv)
 {
-  return SAMPLE_TEXTURE2D_X(_ASPMaterialTexture, asp_point_clamp_sampler, uv).rgba;
+  return SAMPLE_TEXTURE2D_X(_MLMaterialTexture, ml_point_clamp_sampler, uv).rgba;
 }
 
 float DecodeMateriaPassID(float4 value)
@@ -138,12 +129,12 @@ half3 DecodeMateriaPassAlbedoLuminance(float4 value)
 
 float SampleCharacterSceneDepth(float2 uv)
 {
-    return SAMPLE_TEXTURE2D_X(_ASPMaterialDepthTexture, asp_point_clamp_sampler, UnityStereoTransformScreenSpaceTex(uv)).r;
+    return SAMPLE_TEXTURE2D_X(_MLMaterialDepthTexture, ml_point_clamp_sampler, UnityStereoTransformScreenSpaceTex(uv)).r;
 }
 
 float SampleCharacterDepthOffsetShadow(float2 uv)
 {
-    return SAMPLE_TEXTURE2D_X(_ASPDepthOffsetShadowTexture, asp_point_clamp_sampler, UnityStereoTransformScreenSpaceTex(uv)).r;
+    return SAMPLE_TEXTURE2D_X(_MLDepthOffsetShadowTexture, ml_point_clamp_sampler, UnityStereoTransformScreenSpaceTex(uv)).r;
 }
 
 float Remapfloat(float In, float2 InMinMax, float2 OutMinMax)
@@ -153,9 +144,6 @@ float Remapfloat(float In, float2 InMinMax, float2 OutMinMax)
 
 float3 GetFOVAdjustedPositionOS(float3 positionOS, float3 objectCenterWS, float shift)
 {
-    
-    // Adjusts object-space position based on field-of-view and a shift factor. 
-    // use to perspective distortion. 
     float3 objectCenterVS = TransformWorldToView(objectCenterWS);
     float3 fovAdjustedPositionVS = mul(UNITY_MATRIX_MV, float4(positionOS.xyz, 1)).xyz;
     fovAdjustedPositionVS.z = (fovAdjustedPositionVS.z - objectCenterVS.z)/(shift + 1) + objectCenterVS.z;
