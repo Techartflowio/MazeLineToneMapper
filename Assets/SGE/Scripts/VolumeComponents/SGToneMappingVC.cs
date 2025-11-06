@@ -26,6 +26,7 @@ namespace ML
         public ClampedFloatParameter AgxGammaPivot = new ClampedFloatParameter(0.8f, 0.01f, 1.0f);
         
         public ClampedFloatParameter LayerMaskApplyWeight = new ClampedFloatParameter(1.00f, 0.1f, 1.0f);
+        public ClampedFloatParameter FXLayerMaskApplyWeight = new ClampedFloatParameter(1.00f, 0.1f, 1.0f);
         
         public SGToneMappingVC()
         {

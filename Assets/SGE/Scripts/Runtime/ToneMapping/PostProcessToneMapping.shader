@@ -251,8 +251,8 @@ Shader "Hidden/MAZELINE/PostProcess/ToneMapping"
                     toneMappedColor = originalColor;
                 #endif
 
-                // 레이어 마스크 기반 가중치 적용
-                float3 finalColor = ApplyLayerMaskWeight(originalColor, toneMappedColor, input.texcoord);
+                // 레이어 마스크 기반 가중치 적용 (Character와 FX 마스크 통합 적용)
+                float3 finalColor = ApplyCombinedLayerMaskWeight(originalColor, toneMappedColor, input.texcoord);
 
                 return half4(finalColor, col.a);
             }

@@ -1,33 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-5982674358130287105
-MonoBehaviour:
-  m_ObjectHideFlags: 3
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a9d047502c878c54bb8ce173b1af23e3, type: 3}
-  m_Name: SGToneMappingVC
-  m_EditorClassIdentifier: Assembly-CSharp::ML.SGToneMappingVC
-  active: 1
-  ToneMapType:
-    m_OverrideState: 1
-    m_Value: 3
-  Exposure:
-    m_OverrideState: 1
-    m_Value: 0.5
-  AgxGamma:
-    m_OverrideState: 0
-    m_Value: 0
-  AgxGammaPivot:
-    m_OverrideState: 0
-    m_Value: 0.8
-  LayerMaskApplyWeight:
-    m_OverrideState: 1
-    m_Value: 1
 --- !u!114 &-32820517437979890
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -46,22 +18,22 @@ MonoBehaviour:
     m_Value: 1
   threshold:
     m_OverrideState: 1
-    m_Value: 0.9
+    m_Value: 0.49
   intensity:
     m_OverrideState: 1
-    m_Value: 0.5
+    m_Value: 1
   scatter:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0.7
   clamp:
-    m_OverrideState: 0
-    m_Value: 65472
+    m_OverrideState: 1
+    m_Value: 5
   tint:
     m_OverrideState: 0
     m_Value: {r: 1, g: 1, b: 1, a: 1}
   highQualityFiltering:
-    m_OverrideState: 0
-    m_Value: 0
+    m_OverrideState: 1
+    m_Value: 1
   downscale:
     m_OverrideState: 0
     m_Value: 0
@@ -89,7 +61,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   components:
   - {fileID: -32820517437979890}
-  - {fileID: -5982674358130287105}
+  - {fileID: 8838818716888658744}
 --- !u!114 &3354619455536427197
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -118,3 +90,37 @@ MonoBehaviour:
   LayerMaskApplyWeight:
     m_OverrideState: 0
     m_Value: 0
+  FXLayerMaskApplyWeight:
+    m_OverrideState: 0
+    m_Value: 1
+--- !u!114 &8838818716888658744
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9d047502c878c54bb8ce173b1af23e3, type: 3}
+  m_Name: SGToneMappingVC
+  m_EditorClassIdentifier: Assembly-CSharp::ML.SGToneMappingVC
+  active: 1
+  ToneMapType:
+    m_OverrideState: 1
+    m_Value: 3
+  Exposure:
+    m_OverrideState: 1
+    m_Value: 0.47
+  AgxGamma:
+    m_OverrideState: 0
+    m_Value: 0
+  AgxGammaPivot:
+    m_OverrideState: 0
+    m_Value: 0.8
+  LayerMaskApplyWeight:
+    m_OverrideState: 0
+    m_Value: 1
+  FXLayerMaskApplyWeight:
+    m_OverrideState: 1
+    m_Value: 0.751

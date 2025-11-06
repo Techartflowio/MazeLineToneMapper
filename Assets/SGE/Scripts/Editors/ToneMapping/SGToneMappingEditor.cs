@@ -16,6 +16,7 @@ namespace ML.Editor
         SerializedDataParameter _agxGamma;
         SerializedDataParameter _agxGammaPivot;
         SerializedDataParameter _layerMaskApplyWeight;
+        SerializedDataParameter _fxLayerMaskApplyWeight;
 
         int _lastType = -1;
 
@@ -30,6 +31,7 @@ namespace ML.Editor
             _agxGamma = Unpack(o.Find(x => x.AgxGamma));
             _agxGammaPivot = Unpack(o.Find(x => x.AgxGammaPivot));
             _layerMaskApplyWeight = Unpack(o.Find(x => x.LayerMaskApplyWeight));
+            _fxLayerMaskApplyWeight = Unpack(o.Find(x => x.FXLayerMaskApplyWeight));
 
             // Initialize the last selected type
             if (_toneMapType.value != null)
@@ -93,12 +95,19 @@ namespace ML.Editor
 
             // LayerMask 파라미터 섹션
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("캐릭터 레이어 마스크 파라미터", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("레이어 마스크 파라미터", EditorStyles.boldLabel);
             using (new EditorGUILayout.VerticalScope("box"))
             {
+                EditorGUILayout.LabelField("캐릭터 레이어 마스크", EditorStyles.miniLabel);
                 // ReSharper disable once Unity.PerformanceCriticalCodeInvocation
-                PropertyField(_layerMaskApplyWeight, new GUIContent("가중치", "레이어 마스크 적용 가중치 (0=미적용, 1=완전 적용)"));
-                EditorGUILayout.HelpBox("LayerMask Apply Weight, 레이어 마스크 적용 가중치 (0=미적용, 1=완전 적용)", MessageType.Info);
+                PropertyField(_layerMaskApplyWeight, new GUIContent("캐릭터 가중치", "캐릭터 레이어 마스크 적용 가중치 (0=미적용, 1=완전 적용)"));
+                
+                EditorGUILayout.Space(5);
+                EditorGUILayout.LabelField("FX 레이어 마스크", EditorStyles.miniLabel);
+                // ReSharper disable once Unity.PerformanceCriticalCodeInvocation
+                PropertyField(_fxLayerMaskApplyWeight, new GUIContent("FX 가중치", "FX 레이어 마스크 적용 가중치 (0=미적용, 1=완전 적용)"));
+                
+                EditorGUILayout.HelpBox("레이어 마스크 적용 가중치: 0=톤매핑 미적용, 1=톤매핑 완전 적용. 각 레이어별로 독립적으로 제어 가능합니다.", MessageType.Info);
             }
         }
     }

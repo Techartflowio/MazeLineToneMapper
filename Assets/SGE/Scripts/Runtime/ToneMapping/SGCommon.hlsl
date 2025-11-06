@@ -142,6 +142,11 @@ TEXTURE2D(_CharacterLayerMask);
 SAMPLER(sampler_CharacterLayerMask);
 float _LayerMaskApplyWeight;
 
+// FX Layer Mask 관련
+TEXTURE2D(_FXLayerMask);
+SAMPLER(sampler_FXLayerMask);
+float _FXLayerMaskApplyWeight;
+
 // 레이어 마스크 기반 톤매핑 가중치 적용 함수
 // 전체 색상에 가중치를 적용하여 반환
 float3 ApplyLayerMaskWeight(float3 originalColor, float3 toneMappedColor, float2 uv)
@@ -154,6 +159,40 @@ float3 ApplyLayerMaskWeight(float3 originalColor, float3 toneMappedColor, float2
     
     // 최종 색상: 가중치에 따라 톤매핑 적용
     return lerp(originalColor, toneMappedColor, toneMapWeight);
+}
+
+// FX 레이어 마스크 기반 톤매핑 가중치 적용 함수
+// Character 마스크와 함께 사용하여 두 마스크를 동시에 적용
+float3 ApplyFXLayerMaskWeight(float3 originalColor, float3 toneMappedColor, float2 uv)
+{
+    // FX 레이어 마스크 값 샘플링 (0=배경, 1=FX 이펙트)
+    float fxLayerMaskValue = SAMPLE_TEXTURE2D(_FXLayerMask, sampler_FXLayerMask, uv).r;
+    
+    // 가중치 계산: FX 영역은 FXLayerMaskApplyWeight만큼만 적용, 배경은 완전히 적용 (1.0)
+    float toneMapWeight = lerp(1.0, _FXLayerMaskApplyWeight, fxLayerMaskValue);
+    
+    // 최종 색상: 가중치에 따라 톤매핑 적용
+    return lerp(originalColor, toneMappedColor, toneMapWeight);
+}
+
+// Character와 FX 레이어 마스크를 함께 적용하는 통합 함수
+float3 ApplyCombinedLayerMaskWeight(float3 originalColor, float3 toneMappedColor, float2 uv)
+{
+    // Character 레이어 마스크 값 샘플링
+    float characterMaskValue = SAMPLE_TEXTURE2D(_CharacterLayerMask, sampler_CharacterLayerMask, uv).r;
+    
+    // FX 레이어 마스크 값 샘플링
+    float fxMaskValue = SAMPLE_TEXTURE2D(_FXLayerMask, sampler_FXLayerMask, uv).r;
+    
+    // 각 마스크에 대한 가중치 계산
+    float characterWeight = lerp(1.0, _LayerMaskApplyWeight, characterMaskValue);
+    float fxWeight = lerp(1.0, _FXLayerMaskApplyWeight, fxMaskValue);
+    
+    // 두 가중치 중 더 작은 값을 사용 (둘 다 적용된 경우 더 강한 제한 적용)
+    float combinedWeight = min(characterWeight, fxWeight);
+    
+    // 최종 색상: 가중치에 따라 톤매핑 적용
+    return lerp(originalColor, toneMappedColor, combinedWeight);
 }
 
 float Remapfloat(float In, float2 InMinMax, float2 OutMinMax)

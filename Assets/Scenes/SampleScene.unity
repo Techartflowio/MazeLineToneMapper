@@ -924,8 +924,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 961739749}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.044101417, y: -0.21742156, z: -0.009833903, w: 0.97503144}
-  m_LocalPosition: {x: 0.9277001, y: 0.9260158, z: -1.9725931}
+  m_LocalRotation: {x: -0.009091149, y: 0.15318827, z: 0.0014095509, w: 0.9881542}
+  m_LocalPosition: {x: -0.26655453, y: 1.1033876, z: -2.3469777}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1206,6 +1206,87 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1866269551}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1001 &1973784255
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5211374125729988209, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_Name
+      value: Geo_Sphere_Hi
+      objectReference: {fileID: 0}
+    - target: {fileID: 5211374125729988209, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 5211374125729988209, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_RootOrder
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 42.173
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 42.173
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 42.173
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.209
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.313
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.9377345
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.33039916
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.10110212
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.035622075
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 37.767
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -15.643
+      objectReference: {fileID: 0}
+    - target: {fileID: 9082033050884951138, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -9.731
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a5d52cfd31a5c18439654ad185e2eeee, type: 3}
 --- !u!1 &2116198337
 GameObject:
   m_ObjectHideFlags: 0
@@ -1290,7 +1371,7 @@ GameObject:
   - component: {fileID: 3521683707466773123}
   - component: {fileID: 7218820239248278125}
   - component: {fileID: 5059788001672154254}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Back_Part_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1308,7 +1389,7 @@ GameObject:
   - component: {fileID: 4024233217588088173}
   - component: {fileID: 7133170251085893050}
   - component: {fileID: 2329960007035633681}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Back_Part_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1395,7 +1476,7 @@ GameObject:
   - component: {fileID: 2355653191682247708}
   - component: {fileID: 1172976811987324086}
   - component: {fileID: 7499497021674395898}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Rings
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1476,7 +1557,7 @@ GameObject:
   - component: {fileID: 2667994382452280172}
   - component: {fileID: 6476517947687084780}
   - component: {fileID: 4229607126010098906}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Stand_Part_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1507,7 +1588,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3874231289254137071}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Stand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1586,7 +1667,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1448501443085806459}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Ball
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1645,7 +1726,7 @@ GameObject:
   - component: {fileID: 1296738678326357226}
   - component: {fileID: 8988423917994663629}
   - component: {fileID: 7476877889312545141}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Bottom_Cap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1822,7 +1903,7 @@ GameObject:
   - component: {fileID: 8577614354117532858}
   - component: {fileID: 3886155221346378004}
   - component: {fileID: 8097064273423272568}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Ball_Part
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1848,7 +1929,7 @@ GameObject:
   - component: {fileID: 750974001258836848}
   - component: {fileID: 285757673750222148}
   - component: {fileID: 7120302010817048496}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Stand_Logo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2037,7 +2118,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7823694312774259421}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: UnityMaterialBall_Gold
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2128,7 +2209,7 @@ GameObject:
   - component: {fileID: 6233777116457369307}
   - component: {fileID: 7105339341735408668}
   - component: {fileID: 9102376964654609776}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Back_Part_Logo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2194,7 +2275,7 @@ GameObject:
   - component: {fileID: 7404782291424719770}
   - component: {fileID: 5691571643838763082}
   - component: {fileID: 8496002568620297863}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Stand_Part_2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2212,7 +2293,7 @@ GameObject:
   - component: {fileID: 6754955248402670120}
   - component: {fileID: 1507839029914702275}
   - component: {fileID: 4711151955290684885}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Front_Part
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2293,7 +2374,7 @@ GameObject:
   - component: {fileID: 5270582871199435135}
   - component: {fileID: 7667906935820937665}
   - component: {fileID: 3274465372524955329}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Front_Part_Logo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2364,3 +2445,4 @@ SceneRoots:
   - {fileID: 604712594}
   - {fileID: 505702790}
   - {fileID: 1160234427}
+  - {fileID: 1973784255}

@@ -22,11 +22,8 @@ Shader "Hidden/MAZELINE/PostProcess/CharacterLayerMask"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            // Include DOTS instancing support
-            #if defined(DOTS_INSTANCING_ON)
-                #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
-                #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DOTSInstancing.hlsl"
-            #endif
+            // Include DOTS instancing support (최신 URP 방식)
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
             struct Attributes
             {

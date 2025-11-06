@@ -13,16 +13,19 @@ namespace ML.ToneMapping
         public RenderPassEvent injectionPoint = RenderPassEvent.AfterRenderingPostProcessing;
         
         public LayerMask layerMask = -1;
+        public LayerMask fxLayerMask = -1;
         
         private Material _material;
         private SGToneMappingPass _mSgToneMapPass;
         private CharacterLayerMaskPass _characterLayerMaskPass;
+        private FXLayerMaskPass _fxLayerMaskPass;
 
         /// <inheritdoc/>
         public override void Create()
         {
             _mSgToneMapPass = new SGToneMappingPass(name);
             _characterLayerMaskPass = new CharacterLayerMaskPass(name + "_CharacterMask");
+            _fxLayerMaskPass = new FXLayerMaskPass(name + "_FXMask");
         }
 
         /// <inheritdoc/>
@@ -39,6 +42,15 @@ namespace ML.ToneMapping
                 _characterLayerMaskPass.SetupLayerMask(layerMask);
                 _characterLayerMaskPass.SetupToneMappingPass(_mSgToneMapPass);
                 renderer.EnqueuePass(_characterLayerMaskPass);
+            }
+
+            // FX Layer Mask Pass 추가 (BeforeRenderingTransparents 시점에 실행)
+            if (fxLayerMask != 0 && fxLayerMask != -1) // 유효한 FX 레이어 마스크가 설정된 경우만
+            {
+                _fxLayerMaskPass.renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
+                _fxLayerMaskPass.SetupLayerMask(fxLayerMask);
+                _fxLayerMaskPass.SetupToneMappingPass(_mSgToneMapPass);
+                renderer.EnqueuePass(_fxLayerMaskPass);
             }
 
             if (_material == null)
@@ -64,6 +76,7 @@ namespace ML.ToneMapping
         {
             _mSgToneMapPass.Dispose();
             _characterLayerMaskPass?.Dispose();
+            _fxLayerMaskPass?.Dispose();
         }
 
         public class SGToneMappingPass : ScriptableRenderPass
@@ -73,6 +86,8 @@ namespace ML.ToneMapping
             private SGToneMappingVC _mToneMappingVcComponent;
             private TextureHandle m_characterLayerMaskHandle = TextureHandle.nullHandle;
             private RTHandle m_characterLayerMaskRTHandle; // Execute 방식용
+            private TextureHandle m_fxLayerMaskHandle = TextureHandle.nullHandle;
+            private RTHandle m_fxLayerMaskRTHandle; // Execute 방식용
             
             // One-hot shader keywords for static paths (future: collapse to a single pass gated by keywords only)
             static readonly string KW_TM_FILMIC = "TM_FILMIC";
@@ -98,6 +113,16 @@ namespace ML.ToneMapping
             public void SetCharacterLayerMaskRTHandle(RTHandle maskHandle)
             {
                 m_characterLayerMaskRTHandle = maskHandle;
+            }
+            
+            public void SetFXLayerMask(TextureHandle maskHandle)
+            {
+                m_fxLayerMaskHandle = maskHandle;
+            }
+            
+            public void SetFXLayerMaskRTHandle(RTHandle maskHandle)
+            {
+                m_fxLayerMaskRTHandle = maskHandle;
             }
 
             public void Dispose()
@@ -198,6 +223,12 @@ namespace ML.ToneMapping
                         builder.UseTexture(m_characterLayerMaskHandle, AccessFlags.Read);
                     }
                     
+                    // FX Layer Mask 텍스처 사용
+                    if (m_fxLayerMaskHandle.IsValid())
+                    {
+                        builder.UseTexture(m_fxLayerMaskHandle, AccessFlags.Read);
+                    }
+                    
                     //if (m_BindDepthStencilAttachment)
                     //    builder.SetRenderAttachmentDepth(resourcesData.activeDepthTexture, AccessFlags.Write);
                     builder.SetRenderFunc((ToneMapPassData data, RasterGraphContext rgContext) =>
@@ -230,6 +261,25 @@ namespace ML.ToneMapping
                             // 마스크가 없으면 기본값으로 설정 (모든 영역에 톤매핑 적용)
                             data.Material.SetTexture("_CharacterLayerMask", Texture2D.blackTexture);
                             data.Material.SetFloat("_LayerMaskApplyWeight", 1.0f);
+                        }
+                        
+                        // FX Layer Mask 텍스처 및 가중치 설정
+                        if (m_fxLayerMaskHandle.IsValid())
+                        {
+                            data.Material.SetTexture("_FXLayerMask", m_fxLayerMaskHandle);
+                            data.Material.SetFloat("_FXLayerMaskApplyWeight", _mToneMappingVcComponent.FXLayerMaskApplyWeight.value);
+                        }
+                        else if (m_fxLayerMaskRTHandle != null)
+                        {
+                            // Execute 방식용
+                            data.Material.SetTexture("_FXLayerMask", m_fxLayerMaskRTHandle);
+                            data.Material.SetFloat("_FXLayerMaskApplyWeight", _mToneMappingVcComponent.FXLayerMaskApplyWeight.value);
+                        }
+                        else
+                        {
+                            // 마스크가 없으면 기본값으로 설정 (모든 영역에 톤매핑 적용)
+                            data.Material.SetTexture("_FXLayerMask", Texture2D.blackTexture);
+                            data.Material.SetFloat("_FXLayerMaskApplyWeight", 1.0f);
                         }
                         
                         // 키워드 기반 단일 패스 사용
@@ -506,6 +556,218 @@ namespace ML.ToneMapping
             private class CharacterMaskRenderGraphPassData
             {
                 public RendererListHandle OpaqueRendererList;
+                public RendererListHandle TransparentRendererList;
+                public TextureHandle MaskTexture;
+            }
+        }
+
+        // FX Layer Mask 렌더 패스 - FX 레이어(파티클/이펙트)를 위한 마스크 텍스처 생성
+        public class FXLayerMaskPass : ScriptableRenderPass
+        {
+            private LayerMask m_layerMask;
+            private SGToneMappingPass m_toneMappingPass;
+            private Shader m_maskShader;
+            private Material m_maskMaterial;
+            private RTHandle m_maskTextureHandle;
+            private const string k_FXLayerMaskTextureName = "_FXLayerMaskTexture";
+            private const string k_MaskShaderName = "Hidden/MAZELINE/PostProcess/FXLayerMask";
+
+            public FXLayerMaskPass(string passName)
+            {
+                profilingSampler = new ProfilingSampler(passName);
+            }
+
+            public void SetupLayerMask(LayerMask layerMask)
+            {
+                m_layerMask = layerMask;
+            }
+
+            public void SetupToneMappingPass(SGToneMappingPass toneMappingPass)
+            {
+                m_toneMappingPass = toneMappingPass;
+            }
+
+            public void Dispose()
+            {
+                if (m_maskMaterial)
+                {
+                    UnityEngine.Object.DestroyImmediate(m_maskMaterial);
+                    m_maskMaterial = null;
+                }
+                m_maskTextureHandle?.Release();
+            }
+
+            public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
+            {
+                // 마스크 텍스처 생성
+                var descriptor = cameraTextureDescriptor;
+                descriptor.colorFormat = RenderTextureFormat.R8;
+                descriptor.depthBufferBits = (int)DepthBits.None;
+                descriptor.msaaSamples = 1;
+
+                RenderingUtils.ReAllocateIfNeeded(ref m_maskTextureHandle, descriptor,
+                    FilterMode.Point, TextureWrapMode.Clamp, name: k_FXLayerMaskTextureName);
+
+                ConfigureTarget(m_maskTextureHandle);
+                ConfigureClear(ClearFlag.All, Color.black);
+            }
+
+            public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+            {
+                if (m_maskTextureHandle == null)
+                    return;
+
+                // 마스크 셰이더 로드
+                if (m_maskShader == null)
+                {
+                    m_maskShader = Shader.Find(k_MaskShaderName);
+                    if (m_maskShader == null)
+                    {
+                        Debug.LogWarning($"FX Layer Mask Shader not found: {k_MaskShaderName}");
+                        return;
+                    }
+                    m_maskMaterial = new Material(m_maskShader);
+                }
+
+                var cmd = CommandBufferPool.Get();
+                using (new ProfilingScope(cmd, profilingSampler))
+                {
+                    context.ExecuteCommandBuffer(cmd);
+                    cmd.Clear();
+
+                    // SortingSettings: 카메라 기준 정렬
+                    var transparentSortingSettings = new SortingSettings(renderingData.cameraData.camera)
+                    {
+                        criteria = SortingCriteria.CommonTransparent
+                    };
+
+                    // FX 레이어는 주로 투명 렌더링이므로 투명 렌더링에 집중
+                    // Unlit 셰이더 태그도 지원 (UniversalForward, SRPDefaultUnlit)
+                    var transparentFilteringSettings = new FilteringSettings(RenderQueueRange.transparent, m_layerMask.value);
+                    
+                    // UniversalForward 태그 (Lit 셰이더)
+                    var transparentDrawingSettings = new DrawingSettings(
+                        new ShaderTagId("UniversalForward"),
+                        transparentSortingSettings
+                    )
+                    {
+                        overrideMaterial = m_maskMaterial,
+                        overrideMaterialPassIndex = 0
+                    };
+                    
+                    // SRPDefaultUnlit 태그 추가 (Unlit 셰이더)
+                    transparentDrawingSettings.SetShaderPassName(1, new ShaderTagId("SRPDefaultUnlit"));
+                    
+                    context.DrawRenderers(renderingData.cullResults, ref transparentDrawingSettings, ref transparentFilteringSettings);
+                }
+
+                context.ExecuteCommandBuffer(cmd);
+                CommandBufferPool.Release(cmd);
+
+                // ToneMapping Pass에 마스크 텍스처 전달 (Execute 방식)
+                if (m_toneMappingPass != null && m_maskTextureHandle != null)
+                {
+                    m_toneMappingPass.SetFXLayerMaskRTHandle(m_maskTextureHandle);
+                }
+            }
+
+            public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+            {
+                if (m_layerMask == 0 || m_layerMask == -1)
+                    return;
+
+                var cameraData = frameData.Get<UniversalCameraData>();
+                var resourceData = frameData.Get<UniversalResourceData>();
+
+                // 마스크 셰이더 로드
+                if (m_maskShader == null)
+                {
+                    m_maskShader = Shader.Find(k_MaskShaderName);
+                    if (m_maskShader == null)
+                    {
+                        Debug.LogWarning($"FX Layer Mask Shader not found: {k_MaskShaderName}");
+                        return;
+                    }
+                    m_maskMaterial = new Material(m_maskShader);
+                }
+
+                // 마스크 텍스처 생성 (1채널 R8)
+                var maskDescriptor = cameraData.cameraTargetDescriptor;
+                maskDescriptor.colorFormat = RenderTextureFormat.R8;
+                maskDescriptor.depthBufferBits = (int)DepthBits.None;
+                maskDescriptor.msaaSamples = 1;
+
+                var maskTexture = UniversalRenderer.CreateRenderGraphTexture(
+                    renderGraph, maskDescriptor, k_FXLayerMaskTextureName, false);
+
+                // 별도의 Depth 텍스처 생성 (마스크 렌더링용)
+                var depthDescriptor = cameraData.cameraTargetDescriptor;
+                depthDescriptor.colorFormat = RenderTextureFormat.Depth;
+                depthDescriptor.depthBufferBits = (int)DepthBits.Depth32;
+                depthDescriptor.msaaSamples = 1;
+
+                var maskDepthTexture = UniversalRenderer.CreateRenderGraphTexture(
+                    renderGraph, depthDescriptor, "_FXLayerMaskDepth", false);
+
+                // Universal Rendering Data에서 cullResults 가져오기
+                var renderingData = frameData.Get<UniversalRenderingData>();
+
+                // 투명 렌더러 리스트 생성 (FX 레이어는 주로 투명 렌더링)
+                var transparentDrawingSettings = new DrawingSettings(
+                    new ShaderTagId("UniversalForward"),
+                    new SortingSettings(cameraData.camera)
+                    {
+                        criteria = SortingCriteria.CommonTransparent
+                    }
+                )
+                {
+                    overrideMaterial = m_maskMaterial,
+                    overrideMaterialPassIndex = 0
+                };
+                
+                // Unlit 셰이더 태그 추가
+                transparentDrawingSettings.SetShaderPassName(1, new ShaderTagId("SRPDefaultUnlit"));
+
+                var transparentRendererListParams = new RendererListParams(
+                    cullingResults: renderingData.cullResults,
+                    drawSettings: transparentDrawingSettings,
+                    filteringSettings: new FilteringSettings(RenderQueueRange.transparent, m_layerMask.value)
+                );
+                var transparentRendererListHandle = renderGraph.CreateRendererList(transparentRendererListParams);
+
+                // 렌더링 패스 추가
+                using (var builder = renderGraph.AddRasterRenderPass<FXMaskRenderGraphPassData>(
+                    "FX Layer Mask Pass (RenderGraph)", out var passData, profilingSampler))
+                {
+                    passData.TransparentRendererList = transparentRendererListHandle;
+                    passData.MaskTexture = maskTexture;
+
+                    builder.SetRenderAttachment(maskTexture, 0, AccessFlags.Write);
+                    builder.SetRenderAttachmentDepth(maskDepthTexture, AccessFlags.Write);
+
+                    builder.UseRendererList(transparentRendererListHandle);
+
+                    builder.SetRenderFunc((FXMaskRenderGraphPassData data, RasterGraphContext rgContext) =>
+                    {
+                        var cmd = rgContext.cmd;
+
+                        // 마스크 텍스처 클리어 (color=black, depth=1.0)
+                        cmd.ClearRenderTarget(true, true, Color.black);
+
+                        // 투명 렌더링 (Additive 블렌딩 이펙트 포함)
+                        cmd.DrawRendererList(data.TransparentRendererList);
+                    });
+                }
+
+                // ToneMapping Pass에 마스크 텍스처 전달
+                if (m_toneMappingPass != null)
+                {
+                    m_toneMappingPass.SetFXLayerMask(maskTexture);
+                }
+            }
+
+            private class FXMaskRenderGraphPassData
+            {
                 public RendererListHandle TransparentRendererList;
                 public TextureHandle MaskTexture;
             }
