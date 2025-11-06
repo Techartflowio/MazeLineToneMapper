@@ -15,32 +15,26 @@ namespace ML
         AGX = 4
     }
 
-    [Serializable, VolumeComponentMenu("MazeLine/UBER Tone Mapping")]
-    public class MLToneMap : VolumeComponent, IPostProcessComponent
+    [Serializable, VolumeComponentMenu("SGE/Project A Tone-Mapping")]
+    public class SGToneMappingVC : VolumeComponent, IPostProcessComponent
     {
         [SerializeField]public ToneMapCurveTypeParameter ToneMapType =
         new ToneMapCurveTypeParameter(ToneMapCurveType.None);
         
         public ClampedFloatParameter Exposure = new ClampedFloatParameter(1.0f, 0.2f, 7f);
-        public BoolParameter IgnoreCharacterPixels = new BoolParameter(false);
-        public ClampedFloatParameter CharacterPixelsToneMapStrength = new ClampedFloatParameter(0.0f, 0, 1.0f);
         public ClampedFloatParameter AgxGamma = new ClampedFloatParameter(0.0f, 0f, 1.0f);
         public ClampedFloatParameter AgxGammaPivot = new ClampedFloatParameter(0.8f, 0.01f, 1.0f);
         
-        public MLToneMap()
+        public ClampedFloatParameter LayerMaskApplyWeight = new ClampedFloatParameter(1.00f, 0.1f, 1.0f);
+        
+        public SGToneMappingVC()
         {
-            displayName = "MazeLine Tone Mapping";
+            displayName = "SGE PRJ A Tone Mapping";
         }
 
         public bool IsActive()
         {
             return (int)ToneMapType.value >= 0 && ToneMapType.overrideState;
-        }
-
-        [Obsolete("Unused #from(2023.1)", false)]
-        public bool IsTileCompatible()
-        {
-            return false;
         }
     }
 

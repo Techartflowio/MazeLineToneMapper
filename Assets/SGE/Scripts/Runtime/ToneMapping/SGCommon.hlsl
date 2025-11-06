@@ -137,6 +137,25 @@ float SampleCharacterDepthOffsetShadow(float2 uv)
     return SAMPLE_TEXTURE2D_X(_MLDepthOffsetShadowTexture, ml_point_clamp_sampler, UnityStereoTransformScreenSpaceTex(uv)).r;
 }
 
+// Character Layer Mask 관련
+TEXTURE2D(_CharacterLayerMask);
+SAMPLER(sampler_CharacterLayerMask);
+float _LayerMaskApplyWeight;
+
+// 레이어 마스크 기반 톤매핑 가중치 적용 함수
+// 전체 색상에 가중치를 적용하여 반환
+float3 ApplyLayerMaskWeight(float3 originalColor, float3 toneMappedColor, float2 uv)
+{
+    // 레이어 마스크 값 샘플링 (0=배경, 1=캐릭터)
+    float layerMaskValue = SAMPLE_TEXTURE2D(_CharacterLayerMask, sampler_CharacterLayerMask, uv).r;
+    
+    // 가중치 계산: 캐릭터 영역은 LayerMaskApplyWeight만큼만 적용, 배경은 완전히 적용 (1.0)
+    float toneMapWeight = lerp(1.0, _LayerMaskApplyWeight, layerMaskValue);
+    
+    // 최종 색상: 가중치에 따라 톤매핑 적용
+    return lerp(originalColor, toneMappedColor, toneMapWeight);
+}
+
 float Remapfloat(float In, float2 InMinMax, float2 OutMinMax)
 {
     return OutMinMax.x + (In - InMinMax.x) * (OutMinMax.y - OutMinMax.x) / (InMinMax.y - InMinMax.x);
