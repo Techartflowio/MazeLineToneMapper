@@ -22,6 +22,37 @@ MonoBehaviour:
   gain:
     m_OverrideState: 1
     m_Value: {x: 1, y: 1, z: 1, w: 0}
+--- !u!114 &-8583819962228804837
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 865d32f562b65bb468264e0c04ddd78c, type: 3}
+  m_Name: SGToneMappingHDRP
+  m_EditorClassIdentifier: ML.ToneMapping.HDRP::ML.ToneMapping.HDRP.SGToneMappingHDRP
+  active: 0
+  toneMapType:
+    m_OverrideState: 1
+    m_Value: 0
+  exposure:
+    m_OverrideState: 0
+    m_Value: 1
+  agxGamma:
+    m_OverrideState: 0
+    m_Value: 1
+  agxGammaPivot:
+    m_OverrideState: 0
+    m_Value: 0.5
+  layerMaskApplyWeight:
+    m_OverrideState: 0
+    m_Value: 1
+  fxLayerMaskApplyWeight:
+    m_OverrideState: 0
+    m_Value: 1
 --- !u!114 &-8270506406425502121
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -446,26 +477,8 @@ MonoBehaviour:
   m_Name: DefaultVolumeProfile
   m_EditorClassIdentifier: 
   components:
-  - {fileID: -9167874883656233139}
-  - {fileID: 1918650496244738858}
-  - {fileID: 853819529557874667}
-  - {fileID: 1052315754049611418}
-  - {fileID: -1170528603972255243}
-  - {fileID: -8270506406425502121}
-  - {fileID: -5520245016509672950}
-  - {fileID: 7173750748008157695}
-  - {fileID: 1666464333004379222}
-  - {fileID: 9001657382290151224}
-  - {fileID: -6335409530604852063}
-  - {fileID: -1216621516061285780}
-  - {fileID: 3959858460715838825}
-  - {fileID: -7743500325797982168}
-  - {fileID: 4644742534064026673}
-  - {fileID: -4463884970436517307}
-  - {fileID: -6288072647309666549}
-  - {fileID: 7518938298396184218}
   - {fileID: -1410297666881709256}
-  - {fileID: 6584822826558735833}
+  - {fileID: -8583819962228804837}
 --- !u!114 &853819529557874667
 MonoBehaviour:
   m_ObjectHideFlags: 3
