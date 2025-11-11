@@ -1,0 +1,54 @@
+{
+    "name": "ML.ToneMapping.HDRP",
+    "rootNamespace": "ML.ToneMapping.HDRP",
+    "references": [
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Core.Editor",
+        "Unity.RenderPipelines.HighDefinition.Runtime",
+        "Unity.RenderPipelines.HighDefinition.Editor",
+        "Unity.Mathematics",
+        "Unity.RenderPipelines.Core.ShaderLibrary"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_HDRP"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "14.0.0",
+            "define": "HDRP_14_OR_NEWER"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "15.0.0",
+            "define": "HDRP_15_OR_NEWER"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "16.0.0",
+            "define": "HDRP_16_OR_NEWER"
+        },
+        {
+            "name": "com.unity.render-pipelines.high-definition",
+            "expression": "17.0.0",
+            "define": "HDRP_17_OR_NEWER"
+        },
+        {
+            "name": "Unity",
+            "expression": "6.0.0",
+            "define": "UNITY_6_0_OR_NEWER"
+        },
+        {
+            "name": "Unity",
+            "expression": "6.2.0",
+            "define": "UNITY_6_2_OR_NEWER"
+        }
+    ],
+    "noEngineReferences": false
+}
