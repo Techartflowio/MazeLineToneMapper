@@ -14,6 +14,11 @@ namespace ML.ToneMapping.HDRP.Editor
     [CustomEditor(typeof(SGToneMappingHDRP))]
     sealed class SGToneMappingHDRPEditor : VolumeComponentEditor
     {
+        static readonly GUIContent k_RegisterButtonContent = new GUIContent("Register Custom Post Process", "HDRP 글로벌 세팅의 After Post Process 슬롯에 자동 등록합니다.");
+        const string k_CustomPostProcessOrdersSettingsType = "UnityEngine.Rendering.HighDefinition.CustomPostProcessOrdersSettings, Unity.RenderPipelines.HighDefinition.Runtime";
+        const string k_CustomPostProcessVolumeComponentListType = "UnityEngine.Rendering.HighDefinition.CustomPostProcessVolumeComponentList, Unity.RenderPipelines.HighDefinition.Runtime";
+        const string k_AfterPostProcessProperty = "afterPostProcessCustomPostProcesses";
+
         SerializedDataParameter m_ToneMapType;
         SerializedDataParameter m_Exposure;
         SerializedDataParameter m_LayerMaskApplyWeight;
@@ -27,6 +32,8 @@ namespace ML.ToneMapping.HDRP.Editor
             m_Exposure = Unpack(o.Find(x => x.exposure));
             m_LayerMaskApplyWeight = Unpack(o.Find(x => x.layerMaskApplyWeight));
             m_FXLayerMaskApplyWeight = Unpack(o.Find(x => x.fxLayerMaskApplyWeight));
+
+            EnsureRegisteredInGlobalSettings();
         }
 
         public override void OnInspectorGUI()
@@ -77,6 +84,8 @@ namespace ML.ToneMapping.HDRP.Editor
                 
                 EditorGUILayout.Space(5);
                 
+                DrawRegistrationControls();
+
                 if (GUILayout.Button("Setup CustomPass Volume"))
                 {
                     SetupCustomPassVolume();
@@ -126,6 +135,157 @@ namespace ML.ToneMapping.HDRP.Editor
             Selection.activeGameObject = customPassVolume.gameObject;
         }
 
+        static void DrawRegistrationControls()
+        {
+            bool isRegistered = IsRegisteredInGlobalSettings();
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                //EditorGUILayout.LabelField("HDRP 등록 상태", isRegistered ? "등록됨" : "미등록", EditorStyles.boldLabel);
+
+                using (new EditorGUI.DisabledScope(isRegistered))
+                {
+                    if (GUILayout.Button(k_RegisterButtonContent, GUILayout.Width(220f)))
+                    {
+                        EnsureRegisteredInGlobalSettings();
+                    }
+                }
+            }
+
+            if (!isRegistered)
+            {
+                EditorGUILayout.HelpBox("HDRP Global Settings > After Post Process Custom Post Process 목록에 등록되지 않았습니다.\n아래 버튼으로 자동 등록하거나 수동으로 추가하세요.", MessageType.Warning);
+            }
+        }
+
+        static bool EnsureRegisteredInGlobalSettings()
+        {
+            var ordersInstance = GetCustomPostProcessOrdersSettings();
+            if (ordersInstance == null)
+                return false;
+
+            var afterList = GetAfterPostProcessList(ordersInstance);
+            if (afterList == null)
+                return false;
+
+            string typeName = typeof(SGToneMappingHDRP).AssemblyQualifiedName;
+            if (string.IsNullOrEmpty(typeName))
+                return false;
+
+            if (CustomPostProcessListContains(afterList, typeName))
+                return true;
+
+            if (!CustomPostProcessListAdd(afterList, typeName))
+                return false;
+
+            AssetDatabase.SaveAssets();
+
+            return true;
+        }
+
+        static bool IsRegisteredInGlobalSettings()
+        {
+            var ordersInstance = GetCustomPostProcessOrdersSettings();
+            if (ordersInstance == null)
+                return false;
+
+            var afterList = GetAfterPostProcessList(ordersInstance);
+            if (afterList == null)
+                return false;
+
+            string typeName = typeof(SGToneMappingHDRP).AssemblyQualifiedName;
+            if (string.IsNullOrEmpty(typeName))
+                return false;
+
+            return CustomPostProcessListContains(afterList, typeName);
+        }
+
+        static object GetCustomPostProcessOrdersSettings()
+        {
+            var ordersType = Type.GetType(k_CustomPostProcessOrdersSettingsType);
+            if (ordersType == null)
+                return null;
+
+            var method = typeof(GraphicsSettings)
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .FirstOrDefault(m => m.Name == "TryGetRenderPipelineSettings" && m.IsGenericMethod && m.GetParameters().Length == 1);
+
+            if (method == null)
+                return null;
+
+            var genericMethod = method.MakeGenericMethod(ordersType);
+            object[] args = { null };
+
+            bool result = false;
+            try
+            {
+                result = (bool)genericMethod.Invoke(null, args);
+            }
+            catch
+            {
+                return null;
+            }
+
+            if (!result)
+                return null;
+
+            return args[0];
+        }
+
+        static object GetAfterPostProcessList(object ordersInstance)
+        {
+            if (ordersInstance == null)
+                return null;
+
+            var property = ordersInstance.GetType().GetProperty(k_AfterPostProcessProperty, BindingFlags.Public | BindingFlags.Instance);
+            return property?.GetValue(ordersInstance);
+        }
+
+        static bool CustomPostProcessListContains(object listInstance, string typeName)
+        {
+            if (listInstance == null || string.IsNullOrEmpty(typeName))
+                return false;
+
+            var listType = Type.GetType(k_CustomPostProcessVolumeComponentListType);
+            if (listType == null || !listType.IsInstanceOfType(listInstance))
+                listType = listInstance.GetType();
+
+            var containsMethod = listType.GetMethod("Contains", new[] { typeof(string) });
+            if (containsMethod == null)
+                return false;
+
+            try
+            {
+                return (bool)containsMethod.Invoke(listInstance, new object[] { typeName });
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        static bool CustomPostProcessListAdd(object listInstance, string typeName)
+        {
+            if (listInstance == null || string.IsNullOrEmpty(typeName))
+                return false;
+
+            var listType = Type.GetType(k_CustomPostProcessVolumeComponentListType);
+            if (listType == null || !listType.IsInstanceOfType(listInstance))
+                listType = listInstance.GetType();
+
+            var addMethod = listType.GetMethod("Add", new[] { typeof(string) });
+            if (addMethod == null)
+                return false;
+
+            try
+            {
+                return (bool)addMethod.Invoke(listInstance, new object[] { typeName });
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
     
     // Custom Pass Editor
