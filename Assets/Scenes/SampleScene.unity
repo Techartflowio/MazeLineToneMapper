@@ -1160,7 +1160,7 @@ MonoBehaviour:
   stopNaNs: 1
   taaSharpenStrength: 0.5
   TAAQuality: 2
-  taaSharpenMode: 0
+  taaSharpenMode: 2
   taaRingingReduction: 0
   taaHistorySharpening: 0.35
   taaAntiFlicker: 0.5

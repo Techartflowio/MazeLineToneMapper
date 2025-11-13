@@ -1158,6 +1158,7 @@ MonoBehaviour:
   - {fileID: -7758886427601727615}
   - {fileID: 7854722705640638296}
   - {fileID: -1395420542592781549}
+  - {fileID: 5941060698445562043}
 --- !u!114 &448115243408767295
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -2121,6 +2122,31 @@ MonoBehaviour:
   proceduralSoftness:
     m_OverrideState: 1
     m_Value: 0.5
+--- !u!114 &5941060698445562043
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 865d32f562b65bb468264e0c04ddd78c, type: 3}
+  m_Name: SGToneMappingHDRP
+  m_EditorClassIdentifier: ML.ToneMapping.HDRP::ML.ToneMapping.HDRP.SGToneMappingHDRP
+  active: 1
+  toneMapType:
+    m_OverrideState: 1
+    m_Value: 0
+  exposure:
+    m_OverrideState: 1
+    m_Value: 1
+  layerMaskApplyWeight:
+    m_OverrideState: 1
+    m_Value: 1
+  fxLayerMaskApplyWeight:
+    m_OverrideState: 1
+    m_Value: 1
 --- !u!114 &6502289553336579613
 MonoBehaviour:
   m_ObjectHideFlags: 3
